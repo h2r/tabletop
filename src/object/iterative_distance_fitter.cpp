@@ -83,17 +83,19 @@ double IterativeTranslationFitter::getFitScoreAndGradient(const std::vector<cv::
       const distance_field::PropDistanceFieldVoxel& voxel = distance_voxel_grid_->getCell(x, y, z);
       double cx, cy, cz;
       if (voxel.closest_point_[0] != distance_field::PropDistanceFieldVoxel::UNINITIALIZED) {
+
         distance_voxel_grid_->gridToWorld(voxel.closest_point_[0],
                                           voxel.closest_point_[1],
                                           voxel.closest_point_[2],
                                           cx, cy, cz);
+
         val = distance_voxel_grid_->getDistance(x, y, z);
         double weight = kernel(val);
         vector.x += weight * (cx - wx);
         vector.y += weight * (cy - wy);
         vector.z += weight * (cz - wz);
-
         inlier_count += weight;
+
       }
     }
   }
@@ -103,7 +105,7 @@ double IterativeTranslationFitter::getFitScoreAndGradient(const std::vector<cv::
     vector.y /=  inlier_count;
     vector.z /=  inlier_count;
   }
-
+  //printf("Inliner cnt %f / %d\n", inlier_count, cnt);
   return inlier_count / cloud.size();
 }
 
@@ -135,7 +137,7 @@ ModelFitInfo IterativeTranslationFitter::fitPointCloud(const std::vector<cv::Vec
 
   const double clipping = 0.0075;
   boost::function<double(double)> kernel = boost::bind(huberKernel, clipping, _1);
-  const int max_iterations = 100;
+  const int max_iterations = 500;
   int iter = 0;
   double score = 0;
   const double EPS = 0.0;
@@ -144,6 +146,7 @@ ModelFitInfo IterativeTranslationFitter::fitPointCloud(const std::vector<cv::Vec
     double new_score = getFitScoreAndGradient(cloud, location, vector, kernel);
     if (new_score > score + EPS) {
       score = new_score;
+      //printf("%d Score in iteration: %f (%f, %f)\n", model_id_, score, location.x, location.y);
       location.x -= vector.x;
       location.y -= vector.y;
     } else
@@ -162,16 +165,17 @@ ModelFitInfo IterativeTranslationFitter::fitPointCloud(const std::vector<cv::Vec
   pose.orientation.y = 0;
   pose.orientation.z = 0;
   pose.orientation.w = 1;
-
+  //printf("Raw score: %f\n", score);
   // evaluating the model score is cost-intensive and since the model_score <= 1 ->
   // if score already below min_object_score, then set to 0 and stop further evaluation!
-  if (score > min_object_score) {
+  
+  if (score > min_object_score || 1) {
     double model_score = getModelFitScore(cloud, location, kernel, search);
     // since for waterthight model only 50% of the points are visible at max, we weight the model_score only half.
     score *= sqrt(model_score);
   } else
     score = 0;
-
+  //printf("Final score: %f\n", score);
   return ModelFitInfo(model_id_, pose, score);
 }
 

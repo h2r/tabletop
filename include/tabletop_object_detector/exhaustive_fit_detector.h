@@ -120,10 +120,12 @@ class ExhaustiveFitDetector
   {
     std::vector<ModelFitInfo> fit_results;
     if (numResults <= 0) return fit_results;
-    
+    //printf("templates: %d\n", templates.size());    
     for (size_t i=0; i<templates.size(); ++i) 
     {
+
       ModelFitInfo current = templates[i]->fitPointCloud(cloud, search, min_object_score);
+      //printf("fitting: %d with score %f\n", i, current.getModelId(), current.getScore());
       // If the model that was matched is not in the exclusion list
       bool found = (model_exclusion_set_.find(current.getModelId()) != model_exclusion_set_.end());
       if (negate_exclusions_ == found)

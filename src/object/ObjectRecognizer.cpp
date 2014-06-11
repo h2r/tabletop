@@ -279,7 +279,7 @@ struct ObjectRecognizer : public object_recognition_core::db::bases::ModelReader
       tabletop_object_ids_.dirty(true);
 
       perform_fit_merge_ = true;
-      confidence_cutoff_ = 0.85f;
+      confidence_cutoff_ = 0.70f;
     }
 
     /** Compute the pose of the table plane
@@ -331,6 +331,7 @@ struct ObjectRecognizer : public object_recognition_core::db::bases::ModelReader
 
         // Add the object id
         std::string object_id = household_id_to_db_id_[result.object_id_];
+	//printf("object id: %s\n", object_id.c_str());
         pose_result.set_object_id(db_, object_id);
 
         // Add the pose
